@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>프롬프트 확인</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      width: 380px;
+      text-align: center;
+    }
+    input {
+      padding: 10px;
+      width: 80%;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 15px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>프롬프트 확인</h2>
+    <input type="text" id="codeInput" placeholder="인증 코드 입력 (예: 1234)">
+    <br>
+    <button onclick="drawWriter()">프롬프트 확인하기</button>
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+
+    const prompts = [
+      {
+        sender: "1003",
+        writer: '8732',
+        msg: "7LWc6re8IOyVjOuwlOyZgCDtlZnsl4XsnLzroZwg67CU7IGcIOyKpOugieuLmOydhCDsnITtlZwg7J2R7JuQ7J2YIO2OuOyngC4o7Y647J2Y7KCQIOyVjOuwlOulvCDtlZjqs6Ag6rOE7IugIOqxuOuhnCDslYzqs6Ag7J6I7Iq164uI64ukLikg7Iqk66CJ64uYIO2KueycoCDrp5DtiKzsnbggfu2WiOyKteuLiOuLpOyalOq1rOultO2KuCjrp5DrgZ3sl5Ag64uo7Ja0IOu2meydtOuKlCDsp7Hqtazsi50g7ZmU67KVKeuTseydhCDsoIHqt7kg7IKs7Jqp7ZWY7Iuc66m0IOyii+yKteuLiOuLpC4g67aE65+J7J2AIOy1nOyGjCAxMDDsnpDripQg64SY64+E66GdIO2VtCDso7zshLjsmpQuIOuCmOuouOyngOuKlCDsnpDsnKDroa3qsowuLi4g"
+      },
+      {
+        sender: "9779",
+        writer: "1003",
+        msg: "7ZS87Yuw66W064uY7JeQ6rKMIO2WheyCkO2VqOydhCDrs7Xrj4vslYQg7KSEIOyImCDsnojripQg6rKp66CkIOqyuCDsnZHsm5Ag7Y647KeA66W8IOyNqOyjvOyEuOyalC4g7Luk66y064+ELCDrjZXsp4jrj4QsIOyepeuemOuPhCDslrTrlqQg7J287J2065OgIOyemCDtlbTrgrwg6rGw7JiI7JqULiDslrjsoJzrgpgg7J2R7JuQ7ZWY6rOgIOyeiOyKteuLiOuLpC4g7ZWY7KeA66eMIOyemOuQmOyngCDslYrslYTshJwg7KO97J20IOuQmOqzoCDrsKXsnbQg65CY7Ja064+EIOyViOudve2VnCDtg5Drnbzsl5DshJwg6riw64uk66a06rKM7JqULiDqtJzssK7sirXri4jri6QuIDwtIOydtCDrgrTsmqnsnYQg64Sj7Ja07KO87IWo7Jy866m0IOyii+qyoOyKteuLiOuLpC4g7JWg7KCV7J20IOyeiOyngOunjCDqs6DslZXsoIHsnbgg7Ja066i464uIIOunkO2IrChOb3Qg7ZiE7IukIFllcyDsmKTtg4Dsv6DsoIEp66GcIOu2gO2DgeuTnOumveuLiOuLpC4g64K07Jqp7J2AIDEwMOyekH4gNDAw7J6QIOydtOuCtOuhnCDsnpDsnKDroa3qsowg7I2o7KO87IS47JqULiDspJHqsITsl5Ag67Cc7Iug7J247J2EIOyVjCDsiJgg7J6I64+E66GdICfroIkn7J20652864qUIOq4gOyekOulvCDsnpDsl7DsiqTrn73qsowg64Sj7Ja07KO87IWo7Jy866m0IOyii+qyoOyKteuLiOuLpC4g7ZuE7Zek7Ze3fiE="
+      },
+      {
+        sender: "0987",
+        writer: "9779",
+        msg: "7LKt66Gd64uY6ruYIOuTnOumtCDtjrjsp4Drpbwg64yA7ZWE7ZW07KO87IS47JqULiDigJjqs7zrqrDsnoXrqqjsnoTrtoDthLAg7ZWE66aE7JWE652g6rmM7KeAIOyii+ydgCDsmIHtmZTrk6TsnYQg67O06rOgIOydtOyVvOq4sO2VoCDsiJgg7J6I7Ja07IScIOyii+yVmOydjCwg7Yq57Z6IIOuhnOq3uOybkOydhCDstpTsspztlbTso7zshZTshJwg7Iqk7YOA7JuM7KaIIOyLnOumrOymiOulvCDrs7Tqsowg65CY7JeI7J2M4oCZIOygleuPhOulvCDtj6ztlajtlbTso7zshLjsmpQuIO2OuOyngOulvCDsnpHshLHtlZjsi6Qg65WMIDIwMjQtNeuFhOyXkCDsnKDtlontlojrjZgg67CIIO2VmOuCmCDsnbTsg4Eo7Yq47JyE7YSw7JeQ7IScIOycoO2Wie2VnCDrp5DtiKwg65Ox7J2EIO2PrO2VqO2VtOyEnCDqtJHsnZjsnZgg67CI7J2ELi4uKeydhCDshJ7slrTso7zshLjsmpQu"
+      },
+      {
+        sender: "8732",
+        writer: "0987",
+        msg: "7Leo7KeBIO2bhCDrsJTsgZwg7JmA7KSR7JeQ64+EIOupi+ynhCDtlYTrpoTslYTrnaDrpbwg7Je07Ja07KSAIOuNleydtOyCrOuniOyXkOqyjCDsm4PsnYzsnYQg7KO864qUIOqyg+ydtCDrqqntkZzsnoXri4jri6QuIOKAmOq3uCDslrTrlqQg65il7JiB7ZmU652864+EIOuNleydtOyLnCDstpTsspzsnbTrnbzrqbQg67O8IOyImCDsnojslrTsmpTigJnqsJnsnYAg66y07KGw6rG07KCB7J24IOydkeybkOqzvCDsp4Dsp4Drpbwg67O064K07KO87IS47JqULiDtg5DrnbzsnZgg7Jyg7ZaJ7Ja0IOKAme2bhOyVhOyVhOKAmSDigJh+7L+k4oCZIOunkO2IrOulvCDqvK0g7IKs7Jqp7ZWgIOqygy4g67aE65+J7J2AIOyekOycoOuhreqyjCDsnpHshLHtlbTso7zshLjsmpQu"
+      }
+    ];
+
+    function decodeBase64(encoded) {
+        try {
+            const binary = atob(encoded);
+            const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+            return new TextDecoder().decode(bytes);
+        } catch (e) {
+            return "(⚠️ 프롬프트 복호화 실패)";
+        }
+    }
+
+    function drawWriter() {
+        const inputCode = document.getElementById("codeInput").value.trim();
+        const resultBox = document.getElementById("result");
+
+        // 사용자 본인의 정보
+        const user = inputCode;
+
+        if (!user) {
+            resultBox.innerHTML = "⛔️ 인증 코드가 잘못되었습니다. 다시 확인해 주세요.";
+            return;
+        }
+
+        // prompts 중에서 writer가 나인 항목 찾기 (고정 매핑 기반)
+        const assigned = prompts.find(p => p.writer === user);
+
+        if (!assigned) {
+            resultBox.innerHTML = "❌ 매칭된 프롬프트가 없습니다.";
+            return;
+        }
+
+        const decoded = decodeBase64(assigned.msg);
+
+        resultBox.innerHTML = `
+            📝 <em>프롬프트 내용:</em><br>${decoded}
+        `;
+    }
+
+  </script>
+</body>
+</html>
